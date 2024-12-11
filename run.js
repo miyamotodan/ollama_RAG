@@ -12,6 +12,14 @@ import { StringOutputParser } from "@langchain/core/output_parsers"; // Parser p
 import { PromptTemplate } from "@langchain/core/prompts"; // Per creare template di prompt
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents"; // Catena per combinare documenti
 
+const getTimeBetweenDates = (startDate, endDate) => {
+    const seconds = Math.floor((endDate - startDate) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    return { seconds, minutes, hours, days };
+};
+
 // Passo 1: Caricare documenti da remoto
 console.log("Carico documenti...");
 
@@ -19,25 +27,40 @@ console.log("Carico documenti...");
 const loader = new CheerioWebBaseLoader(
     "https://morpurgo.di.unimi.it/didattica/LabProgrammazione/i_promessi_sposi.txt"
 );
+
+let d1 = new Date().getTime();
 const docs = await loader.load(); // Caricamento dei documenti
+let d2 = new Date().getTime();
+console.log(getTimeBetweenDates(d1, d2));
+
 console.log("Documenti caricati:", docs.length);
 
 // Passo 2: Dividere i documenti in chunk
 const textSplitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 1000, // Dimensione di ogni chunk
-    chunkOverlap: 0, // Sovrapposizione tra i chunk
+    chunkSize: 500, // Dimensione di ogni chunk
+    chunkOverlap: 10, // Sovrapposizione tra i chunk
 });
+
+d1 = new Date().getTime();
 const allSplits = await textSplitter.splitDocuments(docs); // Creazione dei chunk
+d2 = new Date().getTime();
+console.log(getTimeBetweenDates(d1, d2));
+
 console.log("Numero di chunks:", allSplits.length);
 
 // Passo 3: Creare il vector store con embeddings
-const embeddings = new OllamaEmbeddings({ 
+const embeddings = new OllamaEmbeddings({
     model: process.env.OLLAMA_EMBEDDING_MODEL // Modello per calcolare embeddings
 });
+
+d1 = new Date().getTime();
 const vectorStore = await MemoryVectorStore.fromDocuments(
     allSplits, // Chunks dei documenti
     embeddings // Modello embeddings
 );
+d2 = new Date().getTime();
+console.log(getTimeBetweenDates(d1, d2));
+
 
 // Passo 4: Configurare il modello LLM per il riassunto
 const ollamaLlm = new ChatOllama({
@@ -61,7 +84,12 @@ const chain = await createStuffDocumentsChain({
 console.log("Ricerca...");
 
 const question = "Che tipo di relazione intercorre tra renzo e lucia? Queale è il loro rapporto?"; // Domanda specifica
-const rd = await vectorStore.similaritySearch(question, 5); // Cerca i 5 documenti più simili
+
+d1 = new Date().getTime();
+const rd = await vectorStore.similaritySearch(question, 10); // Cerca i 5 documenti più simili
+d2 = new Date().getTime();
+console.log(getTimeBetweenDates(d1, d2));
+
 console.log("Risultati trovati:", rd.length);
 
 // Stampare i documenti rilevanti
@@ -70,9 +98,14 @@ rd.forEach(r => console.log(r.pageContent, "\n----"));
 // Passo 6: Riassumere i risultati
 console.log("Summarization...");
 
+d1 = new Date().getTime();
 const result = await chain.invoke({
     context: rd, // Fornisci i documenti trovati come contesto
 });
+d2 = new Date().getTime();
+console.log(getTimeBetweenDates(d1, d2));
 
 // Stampare il risultato del riassunto
 console.log("\n==== Riassunto ====\n", result, "\n====");
+
+
