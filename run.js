@@ -5,6 +5,7 @@ import 'dotenv/config'; // Per caricare variabili d'ambiente da un file .env
 // Import di utilità e moduli da LangChain
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"; // Per dividere i documenti in parti
 import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio"; // Loader per caricare documenti web
+import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 import { OllamaEmbeddings } from "@langchain/ollama"; // Modello per generare embeddings
 import { MemoryVectorStore } from "langchain/vectorstores/memory"; // Vector store in memoria
 import { ChatOllama } from "@langchain/ollama"; // Modello di chat basato su Ollama
@@ -24,9 +25,11 @@ const getTimeBetweenDates = (startDate, endDate) => {
 console.log("Carico documenti...");
 
 // URL del sito web da analizzare
-const loader = new CheerioWebBaseLoader(
-    "https://morpurgo.di.unimi.it/didattica/LabProgrammazione/i_promessi_sposi.txt"
-);
+//const loader = new CheerioWebBaseLoader(
+//    "https://www.forumpa.it/pa-digitale/gestione-documentale/polo-di-conservazione-digitale-la-sfida-dellarchivio-centrale-dello-stato-per-un-nuovo-modello-conservativo/"
+//);
+
+const loader = new DocxLoader("C:\\Users\\D.DelPinto\\Documents\\svil-projects\\ollama_RAG\\doc.docx");
 
 let d1 = new Date().getTime();
 const docs = await loader.load(); // Caricamento dei documenti
@@ -38,7 +41,7 @@ console.log("Documenti caricati:", docs.length);
 // Passo 2: Dividere i documenti in chunk
 const textSplitter = new RecursiveCharacterTextSplitter({
     chunkSize: 500, // Dimensione di ogni chunk
-    chunkOverlap: 10, // Sovrapposizione tra i chunk
+    chunkOverlap: 0, // Sovrapposizione tra i chunk
 });
 
 d1 = new Date().getTime();
@@ -70,7 +73,7 @@ const ollamaLlm = new ChatOllama({
 
 // Creare un template per il prompt
 const prompt = PromptTemplate.fromTemplate(
-    "Riassumi i temi principali dei seguenti documenti: {context}" // Template del prompt
+    "Riassumi brevemente in massimo 200 parole il contenuto dei seguenti documenti: {context}" // Template del prompt
 );
 
 // Creare la catena di riassunto dei documenti
@@ -83,7 +86,7 @@ const chain = await createStuffDocumentsChain({
 // Passo 5: Cercare documenti rilevanti
 console.log("Ricerca...");
 
-const question = "Che tipo di relazione intercorre tra renzo e lucia? Queale è il loro rapporto?"; // Domanda specifica
+const question = "in cosa consiste il PCDAS ?"; // Domanda specifica
 
 d1 = new Date().getTime();
 const rd = await vectorStore.similaritySearch(question, 10); // Cerca i 5 documenti più simili
