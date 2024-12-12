@@ -29,7 +29,7 @@ console.log("Carico documenti...");
 //    "https://www.forumpa.it/pa-digitale/gestione-documentale/polo-di-conservazione-digitale-la-sfida-dellarchivio-centrale-dello-stato-per-un-nuovo-modello-conservativo/"
 //);
 
-const loader = new DocxLoader("C:\\Users\\D.DelPinto\\Documents\\svil-projects\\ollama_RAG\\doc.docx");
+const loader = new DocxLoader("250624_PSC_MdL.docx");
 
 let d1 = new Date().getTime();
 const docs = await loader.load(); // Caricamento dei documenti
@@ -86,7 +86,7 @@ const chain = await createStuffDocumentsChain({
 // Passo 5: Cercare documenti rilevanti
 console.log("Ricerca...");
 
-const question = "in cosa consiste il PCDAS ?"; // Domanda specifica
+const question = "fai un elenco delle principali mansioni del 'direttore lavori'"; // Domanda specifica
 
 d1 = new Date().getTime();
 const rd = await vectorStore.similaritySearch(question, 10); // Cerca i 5 documenti più simili
